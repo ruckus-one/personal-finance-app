@@ -1,54 +1,56 @@
-use std::io::{stdin, Read};
+use std::fmt::{Display, Error, Formatter};
+use dialoguer::{theme::ColorfulTheme, Select};
+use crossterm::event::read as await_key_press;
 
-struct Account {
-    id: String,
-    name: String,
-    balance: f64,
-    currency: String,
+mod account;
+use account::example_accounts;
+
+enum Action {
+    ShowBalances,
+    CreateAccount,
+}
+
+impl Display for Action {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
+        match self {
+            Action::ShowBalances => write!(f, "Show balances"),
+            Action::CreateAccount => write!(f, "Create account"),
+        }
+    }
 }
 
 fn main() {
-    let mut accounts = vec![
-        Account {
-            id: String::from("some-acc-1"),
-            name: String::from("Cash"),
-            balance: 123.45,
-            currency: String::from("PLN"),
-        },
-        Account {
-            id: String::from("some-acc-1"),
-            name: String::from("Bank account #1"),
-            balance: 123.45,
-            currency: String::from("PLN"),
-        },
-        Account {
-            id: String::from("some-acc-1"),
-            name: String::from("Shares value"),
-            balance: 123.45,
-            currency: String::from("PLN"),
-        },
+    let accounts = example_accounts();
+    
+    let items = vec![
+        Action::ShowBalances,
+        Action::CreateAccount,
     ];
 
-    accounts.iter_mut().for_each(|account| {
-        println!(
-            "What's the current balance of account <{}>?\n",
-            account.name
-        );
+    loop {
+        let selection = Select::with_theme(&ColorfulTheme::default())
+            .with_prompt("Choose an option")
+            .default(0)
+            .items(&items)
+            .interact()
+            .unwrap();
+    
+        let choice = &items[selection];
+        
+        match choice {
+            Action::ShowBalances => {
+                accounts.iter().for_each(|acc| println!("{}", acc));
+            },
+            Action::CreateAccount => {
+                let id = dialoguer::Input::<String>::new()
+                   .with_prompt("Account ID")
+                   .interact()
+                   .unwrap();
 
-        let mut buffer = String::new();
-        match stdin().read_line(&mut buffer) {
-            Ok(_) => {
-                let input: f64 = buffer.trim().parse().unwrap();
-                account.balance = input;
+                println!("New Account ID: {}", id);
             }
-            Err(_) => println!("Tis not a number!"),
         }
-    });
 
-    let mut total = 0_f64;
-    for account in accounts {
-        total += account.balance;
+        await_key_press().unwrap();
     }
-
-    println!("Total is: {}", total);
 }
