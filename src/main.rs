@@ -1,15 +1,20 @@
 use std::fmt::{Display, Error, Formatter};
+use currency::Currency;
 use dialoguer::{theme::ColorfulTheme, Select};
 use crossterm::event::read as await_key_press;
 
+mod history;
+mod snapshot;
 mod account;
 mod wallet;
-use account::{example_accounts, Account};
+mod currency;
+use account::Account;
 use wallet::Wallet;
 
 enum Action {
     ShowBalances,
     CreateAccount,
+    ShowAccounts,
 }
 
 impl Display for Action {
@@ -17,16 +22,17 @@ impl Display for Action {
         match self {
             Action::ShowBalances => write!(f, "Show balances"),
             Action::CreateAccount => write!(f, "Create account"),
+            Action::ShowAccounts => write!(f, "List accounts"),
         }
     }
 }
 
 fn main() {
-    // let accounts = example_accounts();
-    let mut wallet = Wallet::new();
+    let mut history = history::History::new();
 
     let items = vec![
         Action::ShowBalances,
+        Action::ShowAccounts,
         Action::CreateAccount,
     ];
 
@@ -40,9 +46,42 @@ fn main() {
     
         let choice = &items[selection];
         
+        history.get_latest_snapshot().unwrap().wallet.accounts[0].balance = 100.into();
+
         match choice {
             Action::ShowBalances => {
-                wallet.accounts.iter().for_each(|acc| println!("{}", acc));
+                let snapshot = history.get_latest_snapshot();
+
+                match snapshot {
+                    Some(snapshot) => {
+                        println!("Latest snapshot is from {}", snapshot.formatted_timestamp());
+                        println!("---");
+
+                        let foo = snapshot.wallet.get_sum_for_currency(Currency::PLN);
+                        println!("Balance for PLN -> {}", foo);
+                    },
+                    None => {
+                        println!("No snapshot found");
+                    }
+                }
+            },
+            Action::ShowAccounts => {
+                let snapshot = history.get_latest_snapshot();
+
+                match snapshot {
+                    Some(snapshot) => {
+                        println!("Latest snapshot is from {}", snapshot.formatted_timestamp());
+                        println!("---");
+                        let wallet = snapshot.wallet();
+                        
+                        for account in wallet.accounts() {
+                            println!("{} -> {}", account.name, account.balance);
+                        }
+                    },
+                    None => {
+                        println!("No snapshot found");
+                    },
+                }
             },
             Action::CreateAccount => {
                 let name = dialoguer::Input::<String>::new()
@@ -50,7 +89,18 @@ fn main() {
                    .interact()
                    .unwrap();
 
-                wallet.add_account(Account::new(name, 0.into(), "PLN".into()))
+                let snapshot = history.get_latest_snapshot();
+
+                match snapshot {
+                    Some(snapshot) => {
+                        let wallet = snapshot.wallet();
+                        wallet.add_account(Account::new(name.clone(), 0.into(), Currency::PLN));
+                        println!("New account has been created! -> {}", name);   
+                    },
+                    None => {
+                        println!("No snapshot found");
+                    }
+                }
             }
         }
 
