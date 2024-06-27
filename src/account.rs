@@ -1,10 +1,24 @@
 use std::{fmt::{Display, Error, Formatter}, rc::Rc};
+use uuid::Uuid;
 
 pub struct Account {
-    id: String,
-    name: String,
-    balance: f64,
-    currency: String,
+    pub id: String,
+    pub name: String,
+    pub balance: f64,
+    pub currency: String,
+}
+
+impl Account {
+    pub fn new(name: String, opening_balance: f64, currency: String) -> Account {
+        let id = Uuid::new_v4().to_string();
+
+        Account {
+            id,
+            name,
+            balance: opening_balance,
+            currency,
+        }
+    }
 }
 
 impl Display for Account {

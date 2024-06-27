@@ -3,7 +3,9 @@ use dialoguer::{theme::ColorfulTheme, Select};
 use crossterm::event::read as await_key_press;
 
 mod account;
-use account::example_accounts;
+mod wallet;
+use account::{example_accounts, Account};
+use wallet::Wallet;
 
 enum Action {
     ShowBalances,
@@ -20,8 +22,9 @@ impl Display for Action {
 }
 
 fn main() {
-    let accounts = example_accounts();
-    
+    // let accounts = example_accounts();
+    let mut wallet = Wallet::new();
+
     let items = vec![
         Action::ShowBalances,
         Action::CreateAccount,
@@ -39,15 +42,15 @@ fn main() {
         
         match choice {
             Action::ShowBalances => {
-                accounts.iter().for_each(|acc| println!("{}", acc));
+                wallet.accounts.iter().for_each(|acc| println!("{}", acc));
             },
             Action::CreateAccount => {
-                let id = dialoguer::Input::<String>::new()
-                   .with_prompt("Account ID")
+                let name = dialoguer::Input::<String>::new()
+                   .with_prompt("Name the new account")
                    .interact()
                    .unwrap();
 
-                println!("New Account ID: {}", id);
+                wallet.add_account(Account::new(name, 0.into(), "PLN".into()))
             }
         }
 
