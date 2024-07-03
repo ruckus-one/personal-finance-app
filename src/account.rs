@@ -1,7 +1,9 @@
 use std::{fmt::{Display, Error, Formatter}, rc::Rc};
 use uuid::Uuid;
+use serde::{Serialize, Deserialize};
 use crate::currency::Currency;
 
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Account {
     pub id: String,
     pub name: String,
@@ -19,6 +21,11 @@ impl Account {
             balance: opening_balance,
             currency,
         }
+    }
+
+    pub fn set_balance(&mut self, balance: f64) -> &Account {
+        self.balance = balance;
+        self
     }
 }
 
@@ -41,7 +48,7 @@ pub fn example_accounts() -> Rc<Vec<Account>> {
             id: String::from("some-acc-2"),
             name: String::from("Bank account #1"),
             balance: 123.45,
-            currency: Currency::PLN,
+            currency: Currency::GBP,
         },
         Account {
             id: String::from("some-acc-3"),
@@ -50,4 +57,16 @@ pub fn example_accounts() -> Rc<Vec<Account>> {
             currency: Currency::PLN,
         },
     ])
+}
+
+mod tests {
+    use super::*;
+
+    #[test]
+    fn account_balance_can_be_updated() {
+        let mut account = Account::new("Cash".into(), 123.45, Currency::PLN);
+        assert_eq!(account.balance, 123.45);
+        account.set_balance(234.56);
+        assert_eq!(account.balance, 234.56);
+    }
 }

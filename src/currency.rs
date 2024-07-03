@@ -1,6 +1,8 @@
 use std::fmt::{Display, Formatter, Result};
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[allow(dead_code)]
 pub enum Currency {
     USD, // United States Dollar

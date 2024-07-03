@@ -1,5 +1,8 @@
+use serde::{Deserialize, Serialize};
+
 use crate::{account::Account, currency::Currency};
 
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Wallet {
     pub accounts: Vec<Account>,
 }
@@ -8,7 +11,7 @@ impl Wallet {
     pub fn new() -> Wallet {
         Wallet {
             accounts: vec!(
-                Account::new("Cash".into(), 0_f64, Currency::PLN)
+                // Account::new("Cash".into(), 0_f64, Currency::PLN)
             ),
         }
     }
@@ -29,6 +32,14 @@ impl Wallet {
             }
         }
         sum
+    }
+
+    pub fn get_used_currencies(&self) -> std::collections::HashSet<Currency> {
+        let mut set = std::collections::HashSet::new();
+        for account in &self.accounts {
+            set.insert(account.currency);
+        }
+        set
     }
 }
 
@@ -75,5 +86,28 @@ mod tests {
 
         assert_eq!(wallet.get_sum_for_currency(Currency::PLN), 987.21);
         assert_eq!(wallet.get_sum_for_currency(Currency::GBP), 183.97);
+    }
+
+    #[test]
+    fn test_wallet_get_used_currencies() {
+        let mut wallet = Wallet::new();
+        wallet.add_account(Account::new("Account #1".into(), 123.45, Currency::USD.into()));
+        wallet.add_account(Account::new("Account #2".into(), 67.89, Currency::PLN.into()));
+        wallet.add_account(Account::new("Account #3".into(), 782.9, Currency::PLN.into()));
+        wallet.add_account(Account::new("Account #4".into(), 12.97, Currency::PLN.into()));
+        wallet.add_account(Account::new("Account #5".into(), 123.97, Currency::GBP.into()));
+        wallet.add_account(Account::new("Account #6".into(), 60.00, Currency::GBP.into()));
+        wallet.add_account(Account::new("Account #7".into(), 60.00, Currency::GBP.into()));
+        wallet.add_account(Account::new("Account #8".into(), 60.00, Currency::USD.into()));
+        wallet.add_account(Account::new("Account #9".into(), 60.00, Currency::GBP.into()));
+        wallet.add_account(Account::new("Account #9".into(), 60.00, Currency::NOK.into()));
+
+        let used_currencies = wallet.get_used_currencies();
+        assert_eq!(used_currencies.len(), 4);
+
+        assert!(used_currencies.contains(&Currency::USD));
+        assert!(used_currencies.contains(&Currency::PLN));
+        assert!(used_currencies.contains(&Currency::GBP));
+        assert!(used_currencies.contains(&Currency::NOK));
     }
 }

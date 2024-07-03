@@ -1,6 +1,8 @@
 use crate::Wallet;
 use chrono::prelude::*;
+use serde::{Deserialize, Serialize};
 
+#[derive(Serialize, Deserialize)]
 pub struct Snapshot {
     pub wallet: Wallet,
     pub timestamp: i64,
@@ -22,7 +24,7 @@ impl Snapshot {
     // get the formatted timestamp using chrono
     pub fn formatted_timestamp(&self) -> String {
         let datetime = Utc.timestamp_opt(self.timestamp, 0).unwrap();
-        datetime.to_rfc3339()
+        datetime.to_rfc2822()
     }
 }
 
@@ -42,7 +44,7 @@ mod tests {
 
     #[test]
     fn test_formatted_timestamp() {
-        let expected = Utc.timestamp_opt(Utc::now().timestamp(), 0).unwrap().to_rfc3339();
+        let expected = Utc.timestamp_opt(Utc::now().timestamp(), 0).unwrap().to_rfc2822();
 
         let wallet = Wallet::new();
         let snapshot = Snapshot::new(wallet);

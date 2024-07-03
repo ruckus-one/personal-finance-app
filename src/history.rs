@@ -1,5 +1,8 @@
+use serde::{Deserialize, Serialize};
+
 use crate::{snapshot::Snapshot, wallet::Wallet};
 
+#[derive(Serialize, Deserialize)]
 pub struct History {
     pub snapshots: Vec<Snapshot>,
 }
