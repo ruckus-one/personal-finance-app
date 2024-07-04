@@ -9,6 +9,8 @@ mod snapshot;
 mod account;
 mod wallet;
 mod currency;
+mod currency_rates;
+
 use account::Account;
 use snapshot::Snapshot;
 use structopt::StructOpt;
@@ -22,6 +24,7 @@ enum Action {
     ShowAccounts,
     SaveHistory,
     // LoadHistory,
+    ShowCurrencyRates,
     Quit,
 }
 
@@ -33,6 +36,7 @@ impl Display for Action {
             Action::UpdateBalances => write!(f, "Update balances"),
             Action::ShowAccounts => write!(f, "List accounts"),
             Action::SaveHistory => write!(f, "Save history"),
+            Action::ShowCurrencyRates => write!(f, "Show currency rates"),
             Action::Quit => write!(f, "Quit"),
         }
     }
@@ -66,6 +70,7 @@ fn main() {
         Action::UpdateBalances,
         Action::ShowAccounts,
         Action::SaveHistory,
+        Action::ShowCurrencyRates,
         Action::Quit,
     ];
 
@@ -172,6 +177,32 @@ fn main() {
                 std::fs::write(&opt.filename.to_str().unwrap(), result).unwrap();
 
                 println!("Done! Saved to {}", opt.filename.to_str().unwrap());
+            },
+            Action::ShowCurrencyRates => {
+                let url = "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml";
+                println!("Reading currency rates from {} ...", url);
+                println!("");
+
+                let response = reqwest::blocking::get(url).unwrap();
+                let body = response.text().unwrap();
+
+                let rates = currency_rates::extract_rates_from_xml(body).unwrap();
+                let snapshot = history.get_latest_snapshot();
+
+                match snapshot {
+                    Some(snapshot) => {
+                        let wallet = snapshot.wallet();
+                        let currencies = wallet.get_used_currencies();
+
+                        for currency in currencies {
+                            let rate = rates.get(&currency.to_string()).unwrap_or(&0.0);
+                            println!("EUR{}: {}", currency, rate);
+                        }
+                    },
+                    None => {
+                        println!("No snapshot found");
+                    }
+                }
             },
             Action::Quit => {
                 break;

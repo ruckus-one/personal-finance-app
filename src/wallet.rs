@@ -11,7 +11,7 @@ impl Wallet {
     pub fn new() -> Wallet {
         Wallet {
             accounts: vec!(
-                // Account::new("Cash".into(), 0_f64, Currency::PLN)
+                Account::new("Cash".into(), 0_f64, Currency::PLN)
             ),
         }
     }
